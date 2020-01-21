@@ -1,0 +1,30 @@
+{
+  "name": "olos-js",
+  "version": "1.0.0",
+  "description": "ObjectLand OS Javascript driver (in bundle)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gkgoat/olos.git"
+  },
+  "keywords": [
+    "runtime"
+  ],
+  "author": "Graham",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gkgoat/olos/issues"
+  },
+  "homepage": "https://github.com/gkgoat/olos#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "wasm-loader": "^1.3.0",
+    "webpack": "^4.41.5"
+  },
+  "dependencies": {
+    "webpack-stream": "^5.2.1"
+  }
+}

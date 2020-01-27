@@ -1,6 +1,27 @@
 #include <iostream>
 #include <map>
-
+extern "C"{
+#ifdef __unix
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <linux/fb.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#endif // __unix
+};
+#ifdef wasm
+extern "C"{
+extern int getJSAttr(int,char*);
+extern void setJSAttr(int,char*,int);
+extern int importJSObject(char*);
+extern int importJSObject(int);
+extern int getJSGlobal();
+extern int exportJSObject_int(int);
+extern char* exportJSObject_charstar(int);
+};
+#endif // wasm
 using namespace std;
 class Assembler{
 static int eval(int code){
@@ -15,6 +36,68 @@ int val;
      return val;
      };
 };
+namespace display{
+class DisplayObject{
+public:
+virtual void renderOn(void* theSurface) = 0;
+};
+class DisplaySurface: public DisplayObject{
+public:
+virtual void render(DisplayObject* theObject){theObject->renderOn(this);};
+virtual uint32_t* getBuffer(){return NULL;};
+};
+};
+namespace input{
+class Buttons{
+private:
+int** m_allButtons;
+public:
+int** getAllButtons(){return m_allButtons;};
+void setAllButtons(int** theValue){m_allButtons = theValue;};
+int getButton(int p){return *m_allButtons[p];};
+};
+};
+namespace os{
+namespace input{
+class CommandReader{static char read(){
+char theBuf;
+::read(3,&theBuf,1);
+return theBuf;
+};
+};
+};
+namespace display{
+class FBDisplayBase: public ::display::DisplaySurface{
+public:
+void render(::display::DisplayObject* theObject){::display::DisplaySurface::render(theObject);};
+FBDisplayBase(){
+#ifdef __unix
+    int fb = ::open("/dev/fb0", O_RDWR);
+    if(fb){
+    struct ::fb_var_screeninfo info;
+    if(!(0 == ::ioctl(fb, FBIOGET_VSCREENINFO, &info)))return;
+    size_t len = 4 * info.xres * info.yres;
+    m_buf = (uint32_t*)::mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fb, 0);
+    if(m_buf == MAP_FAILED){m_buf = 0; return;};
+    };
+#endif // __unix
+};
+#ifdef __unix
+private:
+uint32_t* m_buf;
+public:
+uint32_t* getBuffer(){return m_buf;};
+#endif
+#ifdef os
+private:
+int m_addr = 0;
+public:
+uint32_t* getBuffer(){return (uint32_t*)m_addr};
+#endif // __unix
+};
+};
+};
+namespace interpreter{
 class IObject{
 protected:
 IObject** m_ivars;
@@ -67,7 +150,13 @@ Vector* m_stack;
 IObject*** m_objectStack;
 VectorIterator* m_theIterator;
 int(**m_thePrims)(Vector,IObject***);
+display::DisplaySurface* m_theDisplay;
+ostream m_out;
 public:
+display::DisplaySurface* getDisplay(){return m_theDisplay;};
+void setDisplay(display::DisplaySurface* theDisplay){m_theDisplay = theDisplay;};
+ostream getOut(){return m_out;};
+void setOut(ostream theOut){m_out = theOut;};
 Interpreter(int(**thePrims)(Vector,IObject***),Vector initialContext){
     m_thePrims = thePrims;
     m_stack = new Vector(initialContext.getArray());
@@ -84,8 +173,13 @@ void interpretOne(){
     evaluateToken(v_theToken);
 };
 };
+};
 int main()
 {
-    cout << "Hello world!" << endl;
+interpreter::Interpreter* i = new interpreter::Interpreter(NULL,new interpreter::Vector(&"quit"));
+os::display::FBDisplayBase* d = new os::display::FBDisplayBase();
+i->setDisplay(d);
+i->setOut(cout);
+    cout << "ObjectLand Kernel alpha 1" << endl;
     return 0;
 }

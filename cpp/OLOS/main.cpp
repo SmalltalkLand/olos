@@ -69,6 +69,7 @@ return theBuf;
 namespace display{
 class FBDisplayBase: public ::display::DisplaySurface{
 public:
+void renderOn(void* theDisplay){};
 void render(::display::DisplayObject* theObject){::display::DisplaySurface::render(theObject);};
 FBDisplayBase(){
 #ifdef __unix
@@ -114,7 +115,7 @@ Vector();
 char** getArray();
 friend void IObject::send(void* &theStack,IObject*** theObjectStack,char* theToken);
 };
-Vector::Vector(char** theArray){this->m_theArray = theArray;};
+Vector::Vector(char** theArray){this->m_theArray = theArray;}
 Vector::Vector(){this->m_theArray = (char**)&"quit";};
 char** Vector::getArray(){return this->m_theArray;};
 
@@ -151,15 +152,15 @@ IObject*** m_objectStack;
 VectorIterator* m_theIterator;
 int(**m_thePrims)(Vector,IObject***);
 display::DisplaySurface* m_theDisplay;
-ostream m_out;
+ostream* m_out;
 public:
 display::DisplaySurface* getDisplay(){return m_theDisplay;};
 void setDisplay(display::DisplaySurface* theDisplay){m_theDisplay = theDisplay;};
-ostream getOut(){return m_out;};
-void setOut(ostream theOut){m_out = theOut;};
-Interpreter(int(**thePrims)(Vector,IObject***),Vector initialContext){
-    m_thePrims = thePrims;
-    m_stack = new Vector(initialContext.getArray());
+ostream* getOut(){return m_out;};
+void setOut(ostream* theOut){m_out = theOut;};
+Interpreter(void* thePrims,Vector* initialContext){
+    m_thePrims = (int(**)(Vector,IObject***))thePrims;
+    m_stack = new Vector(initialContext->getArray());
     m_theIterator = new VectorIterator(m_stack);
     m_objectStack = 0;
 };
@@ -176,10 +177,11 @@ void interpretOne(){
 };
 int main()
 {
-interpreter::Interpreter* i = new interpreter::Interpreter(NULL,new interpreter::Vector(&"quit"));
+char* quit = "quit";
+interpreter::Interpreter* i = new interpreter::Interpreter((void*)NULL,new interpreter::Vector(&quit));
 os::display::FBDisplayBase* d = new os::display::FBDisplayBase();
 i->setDisplay(d);
-i->setOut(cout);
+i->setOut(&cout);
     cout << "ObjectLand Kernel alpha 1" << endl;
     return 0;
 }

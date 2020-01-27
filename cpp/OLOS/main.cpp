@@ -22,6 +22,13 @@ extern int exportJSObject_int(int);
 extern char* exportJSObject_charstar(int);
 };
 #endif // wasm
+#ifdef _WIN32
+extern "C"{
+    #include <windows.h>
+    #include <stdio.h>
+    #include <tchar.h>
+};
+#endif
 using namespace std;
 class Assembler{
 static int eval(int code){

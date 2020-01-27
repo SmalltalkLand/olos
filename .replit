@@ -1,0 +1,2 @@
+language = "cpp"
+run = "g++ ./cpp/OLOS/main.cpp -o ./temp.out && ./temp.out"

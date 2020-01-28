@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <vector>
 extern "C"{
 #ifdef __unix
 #include <unistd.h>
@@ -22,14 +23,14 @@ extern int exportJSObject_int(int);
 extern char* exportJSObject_charstar(int);
 };
 #endif // wasm
+
 #ifdef _WIN32
-extern "C"{
     #include <windows.h>
     #include <stdio.h>
     #include <tchar.h>
-};
 #endif
 using namespace std;
+int main();
 class Assembler{
 static int eval(int code){
 int val;
@@ -68,7 +69,9 @@ namespace os{
 namespace input{
 class CommandReader{static char read(){
 char theBuf;
+#ifdef __unix
 ::read(3,&theBuf,1);
+#endif // __unix
 return theBuf;
 };
 };
@@ -121,6 +124,7 @@ Vector(char**);
 Vector();
 char** getArray();
 friend void IObject::send(void* &theStack,IObject*** theObjectStack,char* theToken);
+friend int ::main ();
 };
 Vector::Vector(char** theArray){this->m_theArray = theArray;}
 Vector::Vector(){this->m_theArray = (char**)&"quit";};
@@ -161,6 +165,7 @@ int(**m_thePrims)(Vector,IObject***);
 display::DisplaySurface* m_theDisplay;
 ostream* m_out;
 public:
+    Vector* getStack(){return m_stack;};
 display::DisplaySurface* getDisplay(){return m_theDisplay;};
 void setDisplay(display::DisplaySurface* theDisplay){m_theDisplay = theDisplay;};
 ostream* getOut(){return m_out;};
@@ -182,13 +187,63 @@ void interpretOne(){
 };
 };
 };
+char** split(char* s,char delimiter){
+    std::vector<char*>* split = new std::vector<char*>();
+    std::vector<char>* temp = new std::vector<char>();
+for(int i = 0; i < strlen(s); i++){
+if(s[i] == delimiter){
+  split->push_back(temp->data());
+  delete temp;
+  temp = new std::vector<char>();
+
+}else{
+temp->push_back(s[i]);
+};
+
+};
+char** data = split->data();
+delete split;
+return data;
+};
 int main()
 {
+    #ifdef _WIN32
+
+    #endif // _WIN32
 char* quit = "quit";
-interpreter::Interpreter* i = new interpreter::Interpreter((void*)NULL,new interpreter::Vector(&quit));
-os::display::FBDisplayBase* d = new os::display::FBDisplayBase();
-i->setDisplay(d);
-i->setOut(&cout);
+char* null = "null";
+interpreter::Interpreter* v_theInterpreter = new interpreter::Interpreter((void*)NULL,new interpreter::Vector(&quit));
+v_theInterpreter->getStack()->m_theArray = &quit;
+os::display::FBDisplayBase* v_theDisplay = new os::display::FBDisplayBase();
+v_theInterpreter->setDisplay(v_theDisplay );
+v_theInterpreter->setOut(&cout);
     cout << "ObjectLand Kernel alpha 1" << endl;
+    interpreter::Vector* theVectorForMain = new interpreter::Vector(&null);
+    int len = 1, curr = 0;
+for(;;){
+  cout << '>';
+  char* theInput;
+  if(curr < len){
+    theInput = theVectorForMain->getArray()[curr++];
+  }else{
+      #ifdef wasm
+      if(!(theInput = getJSAttr(getJSAttr(getJSGlobal(),'vm'),'autoNext'))){
+      #endif // wasm
+    cin >> theInput;
+    #ifdef wasm
+      };
+    #endif // wasm
+  };
+  cout << endl;
+  if(strcmp(theInput,"quit") == 0)break;
+  #ifdef _WIN32
+  const int lengthOfWinCommand1 = 18;
+if(strncmp(theInput,"win32 load library",lengthOfWinCommand1) == 0)LoadLibraryA((LPCSTR)theInput + lengthOfWinCommand1 + 2);
+    #endif
+    v_theInterpreter->getStack()->m_theArray = split(theInput,' ');
+};
+    #ifdef _WIN32
+
+    #endif // _WIN32
     return 0;
 }

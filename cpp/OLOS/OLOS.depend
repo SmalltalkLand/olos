@@ -2,3 +2,17 @@
 1579370016 source:/home/graham/olos/cpp/OLOS/main.cpp
 	<iostream>
 
+1580160862 source:d:\graham\objectland\main\olos\cpp\olos\main.cpp
+	<iostream>
+	<map>
+	<unistd.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<fcntl.h>
+	<linux/fb.h>
+	<sys/ioctl.h>
+	<sys/mman.h>
+	<windows.h>
+	<stdio.h>
+	<tchar.h>
+

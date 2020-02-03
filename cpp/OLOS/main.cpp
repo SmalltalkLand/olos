@@ -72,6 +72,10 @@ char theBuf;
 #ifdef __unix
 ::read(3,&theBuf,1);
 #endif // __unix
+#ifdef _WIN32
+unsigned long numRead;
+while(!numRead)::ReadFile((HANDLE)3,&theBuf,1,&numRead,NULL);
+#endif // _WIN32
 return theBuf;
 };
 };
@@ -146,14 +150,17 @@ char* next(){
 }
 };
 void IObject::send(void* &theStack,IObject*** theObjectStack,char* theToken){
+        Vector* v_theMethod = (Vector*)m_methods.at(theToken);
+        char** v_theArrayOfNewVector = v_theMethod->getArray();
+        if(strcmp(v_theArrayOfNewVector[0],"CODE") == 0){return;};
     Vector* v_theStack = (Vector*)theStack;
     Vector* v_newStack = new Vector[(sizeof(v_theStack) / 8) + 1];
     for(int i = 0; i < sizeof(v_theStack) / 8; i++){
-        v_newStack[i].m_theArray = v_theStack[i].getArray();
+        v_newStack[i + 1].m_theArray = v_theStack[i].getArray();
     };
+    delete v_theStack;
     theStack = v_newStack;
-    Vector* v_theNewFrame = v_newStack + (sizeof(v_theStack) / 8) + 1;
-    Vector* v_theMethod = (Vector*)m_methods.at(theToken);
+    Vector* v_theNewFrame = v_newStack;
     v_theNewFrame->m_theArray = v_theMethod->getArray();
 };
 class Interpreter{
@@ -211,14 +218,15 @@ int main()
 
     #endif // _WIN32
 char* quit = "quit";
-char* null = "null";
+const int theLength = 2;
+char* vectorSrc[theLength] = {"null", "null"};
 interpreter::Interpreter* v_theInterpreter = new interpreter::Interpreter((void*)NULL,new interpreter::Vector(&quit));
 v_theInterpreter->getStack()->m_theArray = &quit;
 os::display::FBDisplayBase* v_theDisplay = new os::display::FBDisplayBase();
 v_theInterpreter->setDisplay(v_theDisplay );
 v_theInterpreter->setOut(&cout);
     cout << "ObjectLand Kernel alpha 1" << endl;
-    interpreter::Vector* theVectorForMain = new interpreter::Vector(&null);
+    interpreter::Vector* theVectorForMain = new interpreter::Vector(vectorSrc);
     int len = 1, curr = 0;
 for(;;){
   cout << '>';
@@ -242,6 +250,8 @@ if(strncmp(theInput,"win32 load library",lengthOfWinCommand1) == 0)LoadLibraryA(
     #endif
     v_theInterpreter->getStack()->m_theArray = split(theInput,' ');
 };
+delete v_theInterpreter;
+delete v_theDisplay;
     #ifdef _WIN32
 
     #endif // _WIN32

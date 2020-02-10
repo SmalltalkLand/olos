@@ -173,6 +173,9 @@ void interpretOne(){
     char* v_theToken = m_theIterator->next();
     evaluateToken(v_theToken);
 };
+void onInBase(char* theIn){
+
+};
 };
 };
 int main()
@@ -183,5 +186,13 @@ os::display::FBDisplayBase* d = new os::display::FBDisplayBase();
 i->setDisplay(d);
 i->setOut(&cout);
     cout << "ObjectLand Kernel alpha 1" << endl;
+    for(;;){
+      cout << '>';
+      char* theString;
+      cin >> theString;
+      cout << endl;
+
+
+    };
     return 0;
 }
